@@ -1,5 +1,5 @@
 module "label" {
-  source     = "git::https://github.com/cloudposse/terraform-null-label.git?ref=tags/0.15.0"
+  source     = "git::https://github.com/scalyr/terraform-null-label.git?ref=tags/0.15.0-scalyr"
   namespace  = var.namespace
   name       = var.name
   stage      = var.stage
@@ -214,14 +214,15 @@ resource "aws_autoscaling_group" "default" {
     }
   }
 
-  tags = flatten([
-    for key in keys(module.label.tags) :
-    {
-      key                 = key
-      value               = module.label.tags[key]
+  # Allow for defining key-only tags
+  dynamic "tag" {
+    for_each = module.label.tags
+    content {
+      key                 = tag.key
+      value               = tag.value != null ? tag.value : ""
       propagate_at_launch = true
     }
-  ])
+  }
 
   lifecycle {
     create_before_destroy = true
